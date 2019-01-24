@@ -41,23 +41,39 @@ The basic skeleton for your config.json file should be like this:
 
 {
   "token": "",
+  
   "prefix": "#",
+  
   "ownerID": "",
+  
   "botID": "",
+  
   "hangoutID": "",
+  
   "villagersID": "",
+  
   "villageElderID": "",
+  
   "villageID": "",
+  
   "nestID": "",
+ 
  "mothiaID": "",
-  "angelsID": "",
-  "seersID": "",
-  "deadID": "",
-  "initTime": [a time in milliseconds],  
-  "timeUntilMothia": [a time in milliseconds],
-  "mothiaPhaseTime": [a time in milliseconds],
-  "angelSeerTime": [a time in milliseconds]
-
+ 
+ "angelsID": "",
+ 
+ "seersID": "",
+ 
+ "deadID": "",
+ 
+ "initTime": [a time in milliseconds],  
+ 
+ "timeUntilMothia": [a time in milliseconds],
+ 
+ "mothiaPhaseTime": [a time in milliseconds],
+ 
+ "angelSeerTime": [a time in milliseconds]
+ 
 }
 
 What goes next to “token” is your bot’s token, which can be found on the Bot page. Copy-paste it inside the empty quotes.
@@ -82,13 +98,13 @@ Also note that the bot will go offline if the computer which ran the “node Mot
 
 # Note: 
 A little while after I first started working on this bot, I googled and did notice there’s an existing bot out there (Wolfia) that performs a similar function, but I decided to keep working on mine for a few reasons. 
+
 1: I thought it’d be fun 
+
 2: Theirs is written in Java and mine’s is in JavaScript, so I thought mine might still be useful for anyone who wanted a JavaScript bot instead 
+
 3: I thought it might be useful reference material for people learning Discord.js.
+
 4: I tried to design mine to be usable by non-coders. I didn’t look at Wolfia’s code, but I looked at their about page, and for self-hosting, they require some knowledge of PostgreSQL and other technologies for self-hosting. I’ve done my best to make it easy for any Discord user to use my bot and host it.
-
-
-
-
 
 
