@@ -1,3 +1,4 @@
+# MothiaBot
 This is a Discord Bot written using Discord.js (subset of Node.js). It runs a variant of the game known by names such as “Mafia” and “Werewolf.” When I was younger, I misheard it as “Mothia,” and frankly, I thought vaguely defined giant moth-related things sounded way scarier than the mafia, so that’s how this bot got its name. 
 
 The bot is currently in the multiplayer testing phase! There may still be bugs in it, but all known bugs that interfere with gameplay have been solved. Additional/useful features are still being added, but all the basic features necessary to run a game are there.
