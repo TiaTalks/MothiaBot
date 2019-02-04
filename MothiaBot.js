@@ -13,12 +13,14 @@
 //Add dead people channel and figure out why the array is working so inconsistently
 //Stop angels from protecting themselves
 //Fix the order of messages if there are no mothia votes
+//Stop non-players from voting
 //Rank Dead above Villager and take away village talking permissions so they can't talk in the-village
 //Remove angel-seer phase if there are no people with that role
 //Fancy up voice-of-god 
 //Add a pause between voting and next Mothia stage?
 //Have the bot reveal angels and seers' scrying and protecting in the dead channel?
-//Add better error messages
+//Add better error messages for misused commands
+//Think about when to remove villager role for dead 
 
 
 "use strict";
@@ -69,14 +71,11 @@ var mothiaBot = function(){
 		});
 
 
-
-
 		//Send a welcome message to anyone who joins the server.
 		this.client.on("guildMemberAdd", member => {
 		  this.hangout.send("Welcome to the server, <@" + member.id + ">! I'm your friendly local bot! " + 
 		  	"Please @me or DM me the word #commands to find out what I can do for you!");
 		});
-
 
 
 		//Sets up the bot to respond to commands, both in the server and in DMs. 
@@ -166,8 +165,6 @@ var mothiaBot = function(){
 		}
 
 
-
-
 		/**
 		* Helper function. Handles the bot responses to game commands and makes sure they come from the right roles/channels.
 		* @param message is the command it's responding to.
@@ -187,13 +184,37 @@ var mothiaBot = function(){
 			else if(message.content.includes(config.prefix + "scry") && (message.channel.type == "dm") && (this.angelSeerMode) ){
 				gameplay.scry(message, bot);	
 			}
-			/*else if(message.content.includes(config.prefix + "quit")){
-				message.channel.send("Sorry to see you go! I hope you had fun!"); 
-			}*/
-			/*else if(message.content.includes(config.prefix + "remove")){ //Add in this admin level command
-			}*/
+			else if(message.content.includes(config.prefix + "quit")){
+				message.channel.send("Sorry to see you go, <@" + message.author.id + "> I hope you had fun!"); 
+				//gameplay.removePlayer(message.author.id, bot);
+				gameplay.quit(message, bot);
+			}
+			else if(message.content.includes(config.prefix + "remove")){ 
+				//I still have to deal with <@> while using message.mentions.last, and for some reason, it's not consistent? 
+				//last gave me the last one for a while, then started giving me the first mention without me changing any code
+				//My guess is it has something to do with with collections and weird ordering, but then I'm not sure why
+				//that method exists in the first place if it's known that it can't be consistent?
+				//So I'm just isolating the id from the string instead. It's more consistent.
+
+				//I'm removing via ping because if the person is being removed for rule-breaking, then they might have
+				//the same username as another player.
+				if(message.member.roles.has(config.villageElderID)){
+					var playerID = message.content.split("<@"+ config.botID + "> #remove <@")[1];
+					playerID = playerID.substring(0, playerID.length-1); //Get rid of the >
+					//console.log(playerID);
+					gameplay.removePlayer(playerID, bot);
+					//TODO Find a simple way of getting the username/display name of the removed. 
+					//I don't wanna get the player just for the name . . .
+					this.village.send("I'm sorry, " +
+						"! You were removed from the game. Please ask a village elder for more details");
+				}
+				else{
+					message.channel.send("Sorry, you're not an Elder! Only an Elder can remove players");
+				}
+			}
 
 			else if( (message.content.includes(config.prefix + "endGame")) ){
+				console.log(message.member);
 				if(message.member.roles.has(config.villageElderID)){
 					gameplay.endGame(bot); 
 				}	
@@ -243,6 +264,7 @@ var mothiaBot = function(){
 				);
 		}
 
+
 		/**
 		* Helper function. Handles the bot response to the #commands command by DMing the requester the list of commands.
 		* If the requester is a Village Elder (admin), the bot will add the list of admin commands. 
@@ -291,7 +313,7 @@ var mothiaBot = function(){
 		*/
 		this.exile = function(message){
 			message.channel.send("Okay! Bye-bye! I hope you had fun!");
-			setTimeout(turnBotOff, 1000); //Time delay cause the message sends asynchronously and I need the message to send first
+			setTimeout(this.turnBotOff, 1000); //Time delay cause the message sends asynchronously and I need the message to send first
 		}
 
 		/*
@@ -301,8 +323,6 @@ var mothiaBot = function(){
 			console.log("MothiaBot is now offline");
 			process.exit(0);
 		}
-
-
 
 
 		this.client.on('disconnect', () => console.error('Connection lost...'));

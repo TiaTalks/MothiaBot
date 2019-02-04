@@ -7,7 +7,7 @@
 
 
 const gameplay = require("./Gameplay.js");
-const main = require("./MothiaBot.js");
+//const main = require("./MothiaBot.js");
 const config = require("./config.json");
 
 //Integers representing the proportion of each type of player in the game. 
@@ -39,7 +39,7 @@ var beginSignUp = function(bot){
 var signUpUser = function(message, bot){
 	message.channel.send("Roger that! <@" + message.author.id + "> has been signed up for the Mothia game!");
 	bot.players[message.author.id] = "Villager"; 
-	bot.playerNames[message.author.username] = message.author.id;
+	bot.playerNames[message.member.displayName] = message.author.id;
 	message.member.addRole(config.villagersID);
 }
 

@@ -6,7 +6,6 @@
 */
 
 
-const main = require("./MothiaBot.js");
 const setup = require("./GameSetup.js");
 const config = require("./config.json");
 
@@ -66,20 +65,22 @@ var endGame = function(bot){
 	bot.angelSeerMode = false;
 	bot.voteMode = false;
 
+	clearTimeout(endTimer);
+
 	bot.village.send("The game has ended! Thank you all for playing!");
 	bot.village.guild.members.forEach(function(villager){
 		villager.removeRole(config.villagersID);
 		if(bot.players[villager.id] == "Mothia"){
 			villager.removeRole(config.mothiaID);
-			bot.village.send(bot.playerNames[villager.id] + " was a Mothia!");
+			bot.village.send(villager.displayName + " was a Mothia!");
 		}
 		else if(bot.players[villager.id] == "Angel"){
 			villager.removeRole(config.angelsID);
-			bot.village.send(bot.playerNames[villager.id] + " was an Angel!");
+			bot.village.send(villager.displayName  + " was an Angel!");
 		}
 		else if(bot.players[villager.id] == "Seer"){
 			villager.removeRole(config.angelsID);
-			bot.village.send(bot.playerNames[villager.id] + " was a Seer!");
+			bot.village.send(villager.displayName + " was a Seer!");
 		}
 		
 		console.log("Dead array " + deadArray + villager.id); 
@@ -114,6 +115,7 @@ var runMothiaPhase = function(bot){
 
 	victimVotes = [];
 	hasVotedArray = [];
+
 	bot.nest.send("Mothia, it is time to choose your victim. Who will it be? @me with #kill [username] to make your choice. " +
 		"You have five minutes to decide."); 
 	
@@ -136,7 +138,7 @@ var endMothiaPhase = function(bot){
 	}
 	bot.mothiaMode = false;
 	if(hasVotedArray.length > 0){ 
-		victimID = tally(); //The victim will go here
+		victimID = tally(); 
 		
 		//Reset the vote tracking variables
 		victimVotes = []; 
@@ -147,8 +149,13 @@ var endMothiaPhase = function(bot){
 		bot.village.send("By some miracle, there were no Mothia attacks tonight!"); //TODO move this message
 	}
 
-	bot.nest.overwritePermissions( config.mothiaID, {'SEND_MESSAGES': false})
-	runAngelSeerPhase(bot);
+	bot.nest.overwritePermissions( config.mothiaID, {'SEND_MESSAGES': false});
+	if( (bot.angelsArray.length == 0) && (bot.seersArray.length == 0)){
+		runVotingPhase(bot);
+	} 
+	else{
+		runAngelSeerPhase(bot);
+	}
 }
 
 
@@ -197,7 +204,7 @@ var runVotingPhase = function(bot){
 
 	//For now, if someone's protected, I won't reveal who the victim was. I can change this if need be
 	//But I think this will avoid process of elimination being overly helpful in figuring out who the Mothia 
-	if(victimID == null){ //TODO, figure out how to change the statement in case no one voted
+	if(victimID == null){ //TODO, figure out a clean way to change the statement in case no one voted
 		bot.village.send("The next day, you wake up to find that evidence of a Mothia attack. " +
 			"Luckily, the intended victim was protected by an angel.");	
 	}
@@ -306,7 +313,6 @@ var countVote = function(message, bot){
 		victimName = message.content.split("#vote ")[1];
 	}
 	
-	//console.log("The victim's name is " + victimName);
 	
 	if(bot.playerNames.hasOwnProperty(victimName)){
 		var vicID = bot.playerNames[victimName];
@@ -380,14 +386,6 @@ var protect = function(message, bot){
 					victimID = null;
 				}
 				checkAngelSeerPhaseEnd(message, bot);
-				/*hasChosenArray.push(message.author.id);
-
-				if(hasChosenArray.length == (bot.angelsArray.length + bot.seersArray.length)){
-					clearTimeout(endTimer);
-					endTimer = null; //To make debugging easier
-					bot.village.send("All angels and seers have made their choices. For your sake, let's hope they have chosen wisely.");
-					endAngelSeerPhase(bot);
-				}*/
 			}
 			else{
 				message.author.send("Sorry, it looks like " + protecteeName + " isn't a player");
@@ -458,27 +456,60 @@ var checkAngelSeerPhaseEnd = function(message, bot){
 */
 var killPlayerOff = function(bot){
 	deadArray.push(victimID);
-	//console.log("The victim is " + victimID + ". About to kill them off");
-	var victimRole = bot.players[victimID];
-	delete bot.players.victimID; 
+	removePlayer(victimID, bot);
 	var victim = bot.village.guild.members.get(victimID);
-	if(victimRole === "Mothia"){
-		bot.mothiaArray.splice(bot.mothiaArray.indexOf(victimID), 1);; 
-		victim.removeRole(config.mothiaID);
-
-	}
-	else if(victimRole === "Angel"){
-		bot.angelsArray.splice(bot.angelsArray.indexOf(victimID), 1); 
-		victim.removeRole(config.angelsID);
-	}
-	else if(victimRole === "Seer"){
-		bot.seersArray.splice(bot.seersArray.indexOf(victimID), 1); 
-		victim.removeRole(config.seersID);
-	}
-
 	victim.addRole(config.deadID);
 	victimID = null;
 
+}
+
+/*
+* Helper function that removes a player from the game, including them from the active player list and special roles
+* Can be used when player dies or when player is removed by a mod/village elder
+* @param playerID is the Discord ID of the player to be removed
+* @param bot is the bot running the game
+*/
+
+var removePlayer = function(playerID, bot){
+	var removedName = bot.playerNames[playerID];
+	bot.playerNames.forEach(function(player){console.log(player);});
+	console.log("Removing " + playerID + " " + removedName);
+	delete bot.players.playerID; 
+	var playerRole = bot.players[playerID];
+	var player = bot.village.guild.members.get(playerID);
+
+	player.removeRole(config.villagersID);
+	if(playerRole === "Mothia"){
+		bot.mothiaArray.splice(bot.mothiaArray.indexOf(playerID), 1);; 
+		player.removeRole(config.mothiaID);
+		console.log("Removing a mothia!");
+	}
+	else if(playerRole === "Angel"){
+		bot.angelsArray.splice(bot.angelsArray.indexOf(playerID), 1); 
+		player.removeRole(config.angelsID);
+		console.log("Removing an Angel!");
+	}
+	else if(playerRole === "Seer"){
+		bot.seersArray.splice(bot.seersArray.indexOf(playerID), 1); 
+		player.removeRole(config.seersID);
+		console.log("Removing a Seer!");
+	}
+	
+	console.log("Finished removing someone!");
+}
+
+/*
+* Responds to the #quit command by removing the author of the message from an active game.
+* Nothing happens if no game is active
+* @param message is the message containing the #quit command 
+* @param bot is the bot running the game
+*/
+var quit = function(message, bot){
+	var quitterRole = bot.players[message.author.id];
+	bot.village.send("Oh, no! While taking a walk, an unfortunate villager stumbles upon quite a scene! A body collapsed on the path!");
+	bot.village.send("The unfortunate soul is declared dead of natural causes. " +
+		"After the autopsy, it turns out that " + message.member.displayName + " was a " + quitterRole);
+	removePlayer(message.author.id, bot);
 }
 
 
@@ -514,5 +545,8 @@ module.exports = {
 	kill: kill,
 	protect: protect,
 	scry: scry,
-	vote: vote
+	vote: vote,
+	removePlayer: removePlayer,
+	quit: quit,
+	endVotingPhase: endVotingPhase
 }
